@@ -12,17 +12,20 @@ import {
 } from '@material-ui/pickers';
 
 const drawerWidth = 240;
+const insideMapsColor = '#c05142';
+const blackColor = "#000";
+const whiteColor = "#fff";
 const styles = theme => ({
     root: {
         display: 'flex',
-        color: '#000'
+        color: blackColor
     },
     logo: {
         width: '12%',
         height: '12%'
     },
     logoText: {
-        color: '#000',
+        color: blackColor,
         marginLeft: '1%'
     },
     drawer: {
@@ -33,7 +36,7 @@ const styles = theme => ({
     },
     appBar: {
         zIndex: theme.zIndex.drawer + 1,
-        backgroundColor: '#fff'
+        backgroundColor: whiteColor
     },
     backgroundTop: {
         background: 'linear-gradient(270deg, #595959, transparent)',
@@ -67,9 +70,6 @@ const styles = theme => ({
     },
     cards: {
         display: 'flex',
-    },
-    media: {
-        height: 300,
     },
     snackbar: {
         width: '100%',
@@ -112,6 +112,28 @@ const styles = theme => ({
         background:
             'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)',
     },
+    card: {
+        marginBottom: '5%',
+        marginLeft: '15%',
+        marginRight: '15%'
+    },
+    media: {
+        height: '100%',
+        width: '100%'
+    },
+    '@global': {
+        '*::-webkit-scrollbar': {
+            width: '0.7rem'
+        },
+        '*::-webkit-scrollbar-track': {
+            '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)'
+        },
+        '*::-webkit-scrollbar-thumb': {
+            backgroundColor: '#9a9a9a',
+            outline: '1px solid #9a9a9a',
+            borderRadius: '0.5rem'
+        }
+    }
 });
 
 class Organizations extends Component {
@@ -188,7 +210,7 @@ class Organizations extends Component {
             }
         }
 
-        this.setState({ loading: true }); //projects: [], tempProjects: [], loading: true, currentOrganization: org
+        this.setState({ loading: true });
         if (org) {
             fetch('/org/' + org + '/projects/' + this.state.loadWithDetails)
                 .then(res => res.json())
@@ -202,14 +224,13 @@ class Organizations extends Component {
                 .catch(err => console.log(err))
                 .finally(_ => {
                     this.setState({ loading: false });
-                    //this.setDatePickers();
                 });
         }
     };
 
     render() {
         const { classes } = this.props;
-        const statuses = ['created', 'processing', 'finished', 'all'];//['defined', 'submitted', 'ready', 'finished']
+        const statuses = ['created', 'processing', 'finished', 'all'];
         return (
             <div className={classes.root}>
                 <CssBaseline />
@@ -241,6 +262,7 @@ class Organizations extends Component {
                                             onChange={this.handleCheckbox}
                                             inputProps={{ 'aria-label': 'primary checkbox' }}
                                             name="projectDetails"
+                                            color="primary"
                                         />
                                     }
                                     label="load with rooms and floors?"
@@ -297,8 +319,8 @@ class Organizations extends Component {
                                 {this.state.projects.length > 0 ?
                                     <>
                                         <RadioGroup aria-label="gender" name="gender1" value={this.state.radioTarget} onChange={this.handleRadioChange}>
-                                            {statuses.map((status) => (
-                                                <FormControlLabel style={{ marginLeft: '10px' }} value={status} control={<Radio />} label={status} />
+                                            {statuses.map((status, i) => (
+                                                <FormControlLabel key={i} style={{ marginLeft: '10px' }} value={status} control={<Radio />} label={status} />
                                             ))}
                                         </RadioGroup>
                                     </>
@@ -321,42 +343,56 @@ class Organizations extends Component {
                         }
                     </div>
                     {this.state.tempProjects.map(project => (
-                        <Card key={project.id} className={classes.root} style={{ marginBottom: '5%', marginLeft: '10%', marginRight: '10%' }}>
-                            {/* <CardActionArea> */}
+                        <Card key={project.id} className={classes.card}>
                             <div style={{ display: "block", minWidth: '100%' }}>
-                                <div className={Organizations}>
+                                <div>
                                     <GridList className={classes.gridList} cols={2.5}>
-                                        {project.photo.map((photo, i) => (
+                                        {project.photo.length > 0 ? project.photo.map((photo, i) => (
                                             <GridListTile key={i} >
                                                 <CardMedia
+                                                    className={classes.media}
                                                     component="img"
                                                     alt="Project image"
-                                                    src={photo ? photo : 'https://thumbs.dreamstime.com/b/no-image-available-icon-vector-illustration-flat-design-140476186.jpg'}
+                                                    src={photo ? photo : '/placeholder-img.jpg'}
                                                     onError={e => {
-                                                        e.target.src = "";
+                                                        e.target.src = "/placeholder-img.jpg";
+                                                        e.target.style.width = "50%";
+                                                        e.target.style.height = "50%";
                                                     }}
                                                     title="Project image"
                                                 />
                                             </GridListTile>
-                                        ))}
+                                        ))
+                                            : <CardMedia
+                                                className={classes.media}
+                                                style={{ height: '100%', marginLeft: '30%' }}
+                                                component="img"
+                                                alt="Project image"
+                                                src='/placeholder-img.jpg'
+                                                title="Project image"
+                                            />}
                                     </GridList>
                                 </div>
                                 <CardContent>
                                     <Typography gutterBottom variant="h5" component="h2">
                                         {project.name}
                                     </Typography>
+
                                     <Typography variant="body2" color="textSecondary" component="p" style={{ fontWeight: 'bold' }}>
                                         Status: {project.status}<br /><br />Creation date: {project.creationDate}
-                                        <br /><br />
+                                        {this.state.loadWithDetails ?
+                                            <>
+                                                <br /><br />
                                     Floor names: {(project.floors.length > 0 && project.floors !== null)
-                                            ? project.floors.map((floor, i) => floor !== null ? floor.name + (i !== project.floors.length - 1 ? ', ' : '') : 'empty') : 'empty'}
-                                        <br /><br />
+                                                    ? project.floors.map((floor, i) => floor !== null ? floor.name + (i !== project.floors.length - 1 ? ', ' : '') : 'empty') : 'empty'}
+                                                <br /><br />
                                     Room names: {(project.rooms.length > 0 && project.rooms !== null)
-                                            ? project.rooms.map((room, i) => room !== null ? room.name + (i !== project.rooms.length - 1 ? ', ' : '') : 'empty') : 'empty'}
+                                                    ? project.rooms.map((room, i) => room !== null ? room.name + (i !== project.rooms.length - 1 ? ', ' : '') : 'empty') : 'empty'}
+                                            </>
+                                            : ''}
                                     </Typography>
                                 </CardContent>
                             </div>
-                            {/* </CardActionArea> */}
                         </Card>
                     ))}
                 </div>

@@ -20,3 +20,16 @@
     padding: 0.33rem;
     border-radius: 0.3rem;
 }
+
+.MuiGridListTile-tile {
+    height: 100%;
+    text-align: -webkit-center;
+}
+
+.MuiRadio-colorSecondary.Mui-checked {
+    color: #c3594b !important;
+}
+
+.MuiCheckbox-colorPrimary.Mui-checked {
+    color: #c05142 !important;
+}
