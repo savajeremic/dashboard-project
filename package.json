@@ -1,0 +1,24 @@
+{
+  "name": "dashboard-project",
+  "version": "1.0.0",
+  "description": "InsideMaps dashboard project",
+  "main": "server.js",
+  "scripts": {
+    "server": "node server.js",
+    "servermon": "nodemon server.js",
+    "client": "npm start --prefix client",
+    "start": "concurrently \"npm run servermon\" \"npm run client\"",
+    "install client": "cd client && npm install"
+  },
+  "author": "Sava Jeremic",
+  "license": "ISC",
+  "dependencies": {
+    "concurrently": "^5.2.0",
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.0",
+    "request": "^2.88.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
+}

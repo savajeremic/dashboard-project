@@ -1,0 +1,22 @@
+.MuiDrawer-paper {
+    top: 6.5%;
+}
+
+.MuiGridListTile-root {
+    width: 100% !important;
+    height: 70% !important;
+}
+
+.MuiCardContent-root {
+    text-align: center;
+}
+
+.MuiTypography-body1 {
+    font-size: 0.9rem !important;
+}
+.MuiTypography-displayBlock {
+    display: block;
+    background: linear-gradient(90deg, #bdbdbd70, transparent);
+    padding: 0.33rem;
+    border-radius: 0.3rem;
+}
