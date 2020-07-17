@@ -1,7 +1,6 @@
 const express = require('express');
 const fetch = require('node-fetch');
 const router = express.Router();
-
 const rootApiURL = "https://www.insidemaps.com/api/v2/";
 const organizations = [
     { id: "DHHdznEAdR", mastertoken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdhbml6YXRpb25JZCI6IkRISGR6bkVBZFIiLCJpYXQiOjE1OTQ4ODkzMTAsImV4cCI6MTYyNjQyNTMxMH0.B47E5RskLX20SnkVLjz0xRZbbTG60LvMZ_MdBn_-Pto" },

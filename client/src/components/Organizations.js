@@ -12,7 +12,6 @@ import {
 } from '@material-ui/pickers';
 
 const drawerWidth = 240;
-const insideMapsColor = '#c05142';
 const blackColor = "#000";
 const whiteColor = "#fff";
 const styles = theme => ({
