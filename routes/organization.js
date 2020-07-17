@@ -7,6 +7,7 @@ const organizations = [
     { id: "DHHdznEAdR", mastertoken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdhbml6YXRpb25JZCI6IkRISGR6bkVBZFIiLCJpYXQiOjE1OTQ4ODkzMTAsImV4cCI6MTYyNjQyNTMxMH0.B47E5RskLX20SnkVLjz0xRZbbTG60LvMZ_MdBn_-Pto" },
     { id: "p7sdXqUHvo", mastertoken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdhbml6YXRpb25JZCI6InA3c2RYcVVIdm8iLCJpYXQiOjE1ODYzNDcwNDgsImV4cCI6MTYxNzg4MzA0OH0.w3quhvR49MS6m5Jch6w0Y2r_H_h1TvCiujYWaB0XlzY" }
 ];
+const imageTypes = ['hdr', 'hdr-custom-watermark', 'pano', 'equirectangular', 'inspect', 'scanless'];
 const Project = (id, photo, name, status, creationDate, floors, rooms) => {
     return { id, photo, name, status, creationDate, floors, rooms };
 };
@@ -24,12 +25,11 @@ const getSessionToken = async (url, options) => {
         let data = [];
         let i = 0;
         while (i < options.length) {
-            const fetchToken = await fetch(url, options[i])
-            let org = await fetchToken.json();
-            data.push(org.data);
+            data.push(fetch(url, options[i]).then(data => data.json()).then(res => res.data));
             i++;
         }
-        return data;
+        const finalData = await Promise.all(data);
+        return finalData;
     } catch (error) {
         console.log(error);
     }
@@ -43,6 +43,7 @@ const getSessionTokenFromOrgId = async (organizationId) => {
         return sessionToken.data;
     } catch (error) {
         console.log(error);
+        return error;
     }
 };
 
@@ -53,15 +54,16 @@ router.get('/', async (req, res, next) => {
         const sessionTokens = await getSessionToken(rootApiURL + "sessionToken/", options);
         //get options with Bearer <session token>
         const sessionOptions = sessionTokens.map(sessionToken => getOptions(sessionToken));
-        let data = [];
+        const orgPromises = [];
         let i = 0;
         while (i < sessionOptions.length) {
-            const fetchOrg = await fetch(rootApiURL + "organizations/" + organizations[i].id, sessionOptions[i]);
-            let org = await fetchOrg.json();
-            if (org.data)
-                data.push(org.data);
+            orgPromises.push(fetch(rootApiURL + "organizations/" + organizations[i].id, sessionOptions[i])
+                .then(data => data.json())
+                .then(res => res.data)
+            );
             i++;
         }
+        const data = await Promise.all(orgPromises);
         res.send(data);
     } catch (error) {
         console.log(error);
@@ -79,28 +81,33 @@ router.get('/:organizationId/projects/:loadWithDetails', async (req, res, next) 
         const projectData = await fetchProjects.json();
         const projectIds = projectData.data;
         const projectUrls = projectIds.map(p => rootApiURL + "projects/" + p);
-        let projects = [];
+        const projectPromises = [];
+        const imagePromises = [];
+        const floorsPromises = [];
+        const roomsPromises = [];
         let i = 0;
         while (i < projectUrls.length) {
-            //'hdr', 'hdr-custom-watermark', 'pano', 'equirectangular', 'inspect', 'scanless'
-            const imageUrl = rootApiURL + "/projects/" + projectIds[i] + "/images/equirectangular/";
-            let floors;
-            let rooms;
-            const fetchProject = await fetch(projectUrls[i], options);
-            const fetchProjectImages = await fetch(imageUrl, options);
-            let project = await fetchProject.json();
-            let images = await fetchProjectImages.json();
+            projectPromises.push(fetch(projectUrls[i], options)
+                .then(data => data.json()).then(res => res.data)
+            );
+            imagePromises.push(fetch(rootApiURL + "/projects/" + projectIds[i] + "/images/" + imageTypes[3] + "/", options)
+                .then(data => data.json()).then(res => res.data)
+            );
             if (loadDetails === true) {
-                floors = await getProjectDetails(projectIds[i], options, "floors");
-                rooms = await getProjectDetails(projectIds[i], options, "rooms");
-                projects.push(Project(projectIds[i], images.data, project.data.name, project.data.status, project.data.createdAt, floors, rooms));
-            } else {
-                projects.push(Project(projectIds[i], images.data, project.data.name, project.data.status, project.data.createdAt, [], []));
+                floorsPromises.push(getProjectDetails(projectIds[i], options, "floors"));
+                roomsPromises.push(getProjectDetails(projectIds[i], options, "rooms"));
             }
             i++;
         }
-
-        res.send(projects);
+        const projectFinalData = await Promise.all(projectPromises);
+        const projectImages = await Promise.all(imagePromises);
+        const projectFloors = await Promise.all(floorsPromises);
+        const projectRooms = await Promise.all(roomsPromises);
+        const responseData = [];
+        projectFinalData.forEach((project, i) =>
+            responseData.push(Project(projectData.data[i], projectImages[i], project.name, project.status, project.createdAt, projectFloors[i], projectRooms[i]))
+        );
+        res.send(responseData);
     } catch (error) {
         console.log(error);
         res.send(error);
@@ -117,69 +124,14 @@ getProjectDetails = async (projectId, options, opt) => {
         let floors = [];
         let i = 0;
         while (i < floorUrls.length) {
-            const fetchRoomDetails = await fetch(floorUrls[i], options);
-            let room = await fetchRoomDetails.json();
-            floors.push(room.data);
+            floors.push(fetch(floorUrls[i], options).then(data => data.json()).then(res => res.data));
             i++;
         }
-        return floors;
+        const results = await Promise.all(floors);
+        return results;
     } catch (error) {
         console.log(error);
     }
 }
-
-// test - /org/p7sdXqUHvo/projects/NHf8thYGhQ/floors
-router.get('/:organizationId/projects/:projectId/floors', async (req, res, next) => {
-    const projectId = req.params.projectId;
-    const organizationId = req.params.organizationId;
-    const url = rootApiURL + "projects/" + projectId + '/floors/';
-    const options = getOptions(await getSessionTokenFromOrgId(organizationId));
-    try {
-        const fetchFloors = await fetch(url, options);
-        const floorData = await fetchFloors.json();
-        const floorIds = floorData.data;
-        const floorUrls = floorIds.map(p => rootApiURL + "floors/" + p);
-        console.log(floorUrls);
-
-        let floors = [];
-        let i = 0;
-        while (i < floorUrls.length) {
-            const fetchRoomDetails = await fetch(floorUrls[i], options);
-            let room = await fetchRoomDetails.json();
-            floors.push(room.data);
-            i++;
-        }
-        res.send(floors);
-    } catch (error) {
-        console.log(error);
-        res.send(error);
-    }
-});
-//test - /org/p7sdXqUHvo/projects/NHf8thYGhQ/rooms
-router.get('/:organizationId/projects/:projectId/rooms', async (req, res, next) => {
-    const projectId = req.params.projectId;
-    const organizationId = req.params.organizationId;
-    const url = rootApiURL + "projects/" + projectId + '/rooms/';
-    const options = getOptions(await getSessionTokenFromOrgId(organizationId));
-    try {
-        const fetchRooms = await fetch(url, options);
-        const roomData = await fetchRooms.json();
-        const roomIds = roomData.data;
-        const roomUrls = roomIds.map(p => rootApiURL + "rooms/" + p);
-        let rooms = [];
-        let i = 0;
-        while (i < roomUrls.length) {
-            const fetchRoomDetails = await fetch(roomUrls[i], options);
-            let room = await fetchRoomDetails.json();
-            rooms.push(room.data);
-            i++;
-        }
-        res.send(rooms);
-    } catch (error) {
-        console.log(error);
-        res.send(error);
-    }
-});
-
 
 module.exports = router;

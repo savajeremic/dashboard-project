@@ -337,7 +337,7 @@ class Organizations extends Component {
                             : <Typography variant="h4" className={classes.titleP}>Click on an organization to view projects here</Typography>}
                         {this.state.loading
                             ? <Typography variant="h4" className={classes.titleP}>
-                                Loading projects(might take a while): <LinearProgress className={classes.titleP} color="secondary" style={{ alignSelf: "center" }} />
+                                Loading projects: <LinearProgress className={classes.titleP} color="secondary" style={{ alignSelf: "center" }} />
                             </Typography>
                             : ''
                         }
@@ -383,10 +383,10 @@ class Organizations extends Component {
                                         {this.state.loadWithDetails ?
                                             <>
                                                 <br /><br />
-                                    Floor names: {(project.floors.length > 0 && project.floors !== null)
+                                    Floor names: {( (project.floors ? project.floors.length > 0 : false) && project.floors !== null)
                                                     ? project.floors.map((floor, i) => floor !== null ? floor.name + (i !== project.floors.length - 1 ? ', ' : '') : 'empty') : 'empty'}
                                                 <br /><br />
-                                    Room names: {(project.rooms.length > 0 && project.rooms !== null)
+                                    Room names: {( (project.rooms ? project.rooms.length > 0 : false) && project.rooms !== null)
                                                     ? project.rooms.map((room, i) => room !== null ? room.name + (i !== project.rooms.length - 1 ? ', ' : '') : 'empty') : 'empty'}
                                             </>
                                             : ''}
